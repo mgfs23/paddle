@@ -4,6 +4,26 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Chords for Paddle</title>
+    .output {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 12px;
+    min-height: 200px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 15px;
+    font-weight: 300;
+    color: #6b6b6b;
+    line-height: 1.8;
+    background: #fff;
+  }
+  .output .chord {
+    color: #000;
+    font-weight: 800;
+    font-size: 21px;
+    letter-spacing: 0.04em;
+  }
 <style>
   body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 16px; }
   textarea { width: 100%; box-sizing: border-box; font-family: monospace; font-size: 15px; padding: 8px; }
@@ -19,7 +39,7 @@
 <textarea id="input" rows="12" placeholder="Example:&#10;Am     F      C     G&#10;Song lyrics"></textarea>
 <button id="convert">Convert chords</button>
 <button id="copy">Copy result</button>
-<textarea id="output" rows="12" readonly></textarea>
+<div id="output" class="output"></div>
 
 <p class="hint">Chords are replaced on lines that contain only chords, and in the [Am] form inside lyrics. The bass note in chords like C/G is ignored. Unknown chords are replaced with the closest similar one. If the text contains H, then B is treated as Bb (German notation).</p>
 
@@ -86,20 +106,35 @@ function convertText(text) {
       else if (!/^[|:\/\\.,*~%x×0-9()\-–—]+$/i.test(p)) { ok = false; break; }
     }
     if (ok && chords > 0) {
-      return parts.map(p => isSpace(p) ? p : (parseChord(p, german) || p)).join('');
+            return parts.map(p => {
+        if (isSpace(p)) return p;
+        const r = parseChord(p, german);
+        return r ? '\u0001' + r + '\u0002' : p;
+      }).join('');
     }
     return line.replace(/\[([^\]\s]+)\]/g, (m, c) => {
       const r = parseChord(c, german);
-      return r ? '[' + r + ']' : m;
+            return r ? '[\u0001' + r + '\u0002]' : m;
     });
   }).join('\n');
 }
 
+let lastPlain = '';
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
 document.getElementById('convert').addEventListener('click', () => {
-  document.getElementById('output').value = convertText(document.getElementById('input').value);
+  const marked = convertText(document.getElementById('input').value);
+  lastPlain = marked.replace(/[\u0001\u0002]/g, '');
+  document.getElementById('output').innerHTML = escapeHtml(marked)
+    .replace(/\u0001/g, '<span class="chord">')
+    .replace(/\u0002/g, '</span>');
 });
+
 document.getElementById('copy').addEventListener('click', () => {
-  navigator.clipboard.writeText(document.getElementById('output').value);
+  navigator.clipboard.writeText(lastPlain);
 });
 </script>
 </body>
