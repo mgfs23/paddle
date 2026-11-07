@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Аккорды для Paddle</title>
+<title>Chords for Paddle</title>
 <style>
   body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 16px; }
   textarea { width: 100%; box-sizing: border-box; font-family: monospace; font-size: 15px; padding: 8px; }
@@ -12,16 +12,16 @@
 </style>
 </head>
 <body>
-<p><a href="index.html">← Назад к прошивке</a></p>
-<h1>Аккорды для Paddle</h1>
-<p>Вставьте текст с аккордами. Каждый аккорд заменится на пару кнопок: первая — тоника, вторая — тип аккорда.</p>
+<p><a href="index.html">← Back to firmware</a></p>
+<h1>Chords for Paddle</h1>
+<p>Paste text with chords. Each chord will be replaced by a pair of keys: the first is the root note, the second is the chord type.</p>
 
-<textarea id="input" rows="12" placeholder="Например:&#10;Am     F      C     G&#10;Текст песни"></textarea>
-<button id="convert">Заменить аккорды</button>
-<button id="copy">Копировать результат</button>
+<textarea id="input" rows="12" placeholder="Example:&#10;Am     F      C     G&#10;Song lyrics"></textarea>
+<button id="convert">Convert chords</button>
+<button id="copy">Copy result</button>
 <textarea id="output" rows="12" readonly></textarea>
 
-<p class="hint">Аккорды заменяются в строках, где есть только аккорды, и в записи вида [Am] внутри текста. Бас в аккордах вида C/G игнорируется. Неизвестные аккорды заменяются на ближайший похожий. Если в тексте есть H, то B считается как Bb (немецкая нотация).</p>
+<p class="hint">Chords are replaced on lines that contain only chords, and in the [Am] form inside lyrics. The bass note in chords like C/G is ignored. Unknown chords are replaced with the closest similar one. If the text contains H, then B is treated as Bb (German notation).</p>
 
 <script>
 const ROOT_KEYS = ['Q','W','E','R','T','Y','U','I','O','P','[',']'];
