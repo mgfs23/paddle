@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Аккорды для Paddle</title>
+<style>
+  body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 0 16px; }
+  textarea { width: 100%; box-sizing: border-box; font-family: monospace; font-size: 15px; padding: 8px; }
+  button { font-size: 16px; padding: 10px 18px; margin: 8px 8px 8px 0; cursor: pointer; }
+  .hint { color: #555; font-size: 14px; }
+</style>
+</head>
+<body>
+<p><a href="index.html">← Назад к прошивке</a></p>
+<h1>Аккорды для Paddle</h1>
+<p>Вставьте текст с аккордами. Каждый аккорд заменится на пару кнопок: первая — тоника, вторая — тип аккорда.</p>
+
+<textarea id="input" rows="12" placeholder="Например:&#10;Am     F      C     G&#10;Текст песни"></textarea>
+<button id="convert">Заменить аккорды</button>
+<button id="copy">Копировать результат</button>
+<textarea id="output" rows="12" readonly></textarea>
+
+<p class="hint">Аккорды заменяются в строках, где есть только аккорды, и в записи вида [Am] внутри текста. Бас в аккордах вида C/G игнорируется. Неизвестные аккорды заменяются на ближайший похожий. Если в тексте есть H, то B считается как Bb (немецкая нотация).</p>
+
+<script>
+const ROOT_KEYS = ['Q','W','E','R','T','Y','U','I','O','P','[',']'];
+const LETTERS = { C:0, D:2, E:4, F:5, G:7, A:9, B:11, H:11 };
+const CHORD_RE = /^([A-H])([#♯♭b]?)(.*?)(?:\/([A-H])([#♯♭b]?))?$/;
+const VALID_Q = /^(?:maj|min|mi|dim|aug|sus|add|m|M|[0-9#b+\-−–°øΔ△()\/])*$/;
+
+function qualityKey(q) {
+  let s = q.replace(/[()]/g, '').replace(/[−–]/g, '-').replace('°', 'dim').replace('ø', 'm7b5');
+  s = s.replace(/^(maj|Maj|MAJ|M|Δ|△)/, '§').toLowerCase();
+  s = s.replace(/^(min|mi|-)/, 'm');
+
+  if (/^m7(b5|-5)/.test(s)) return 'S';
+  if (/^dim7/.test(s)) return 'A';
+  if (/^dim/.test(s)) return 'J';
+  if (/^(aug|\+)/.test(s)) return 'H';
+  if (/sus2/.test(s)) return 'M';
+  if (/sus/.test(s)) return 'N';
+  if (/^m/.test(s)) {
+    if (/^madd/.test(s)) return 'X';
+    if (/^m6/.test(s)) return 'V';
+    if (/^m(7|9|11|13)/.test(s)) return 'F';
+    return 'K';
+  }
+  if (s[0] === '§') {
+    if (/^§6/.test(s)) return 'B';
+    if (/^§(7|9|11|13)/.test(s)) return 'D';
+    return 'L';
+  }
+  if (/^6/.test(s)) return 'B';
+  if (/^(9|11|13)/.test(s)) return 'Z';
+  if (/^7/.test(s)) return 'G';
+  if (/^add/.test(s)) return 'C';
+  if (/^2/.test(s)) return 'M';
+  if (/^4/.test(s)) return 'N';
+  return 'L';
+}
+
+function parseChord(token, german) {
+  const m = token.match(CHORD_RE);
+  if (!m) return null;
+  const letter = m[1], acc = m[2], q = m[3];
+  if (!VALID_Q.test(q)) return null;
+  let n = LETTERS[letter];
+  if (german && letter === 'B' && acc === '') n = 10;
+  if (acc === '#' || acc === '♯') n += 1;
+  if (acc === 'b' || acc === '♭') n -= 1;
+  n = ((n % 12) + 12) % 12;
+  return ROOT_KEYS[n] + qualityKey(q);
+}
+
+function isSpace(p) { return p === '' || /^\s+$/.test(p); }
+
+function convertText(text) {
+  const german = text.split(/[\s\[\]|]+/).some(t => /^H/.test(t) && parseChord(t, false));
+  return text.split('\n').map(line => {
+    const parts = line.split(/(\s+)/);
+    let chords = 0, ok = true;
+    for (const p of parts) {
+      if (isSpace(p)) continue;
+      if (parseChord(p, german)) chords++;
+      else if (!/^[|:\/\\.,*~%x×0-9()\-–—]+$/i.test(p)) { ok = false; break; }
+    }
+    if (ok && chords > 0) {
+      return parts.map(p => isSpace(p) ? p : (parseChord(p, german) || p)).join('');
+    }
+    return line.replace(/\[([^\]\s]+)\]/g, (m, c) => {
+      const r = parseChord(c, german);
+      return r ? '[' + r + ']' : m;
+    });
+  }).join('\n');
+}
+
+document.getElementById('convert').addEventListener('click', () => {
+  document.getElementById('output').value = convertText(document.getElementById('input').value);
+});
+document.getElementById('copy').addEventListener('click', () => {
+  navigator.clipboard.writeText(document.getElementById('output').value);
+});
+</script>
+</body>
+</html>
